@@ -6,22 +6,21 @@ AssetMart is a cutting-edge digital asset marketplace leveraging blockchain tech
 ---
 
 ### Tech Stack
-- **Polygon**
 - **Solidity**
 - **IPFS**
 - **Hardhat**
-- **Infura**
-
+- **React**
+- **Ethers.js**
+- **Pinata**
 ---
 
 ### Claiming an Issue
-If you want to claim any issue (task), simply reply to the issue thread with a message justifying that you want to work on it. Examples:
-- “Claim”
-- “I want to work on this issue”
+If you want to claim any issue (task) under first come first serve, simply reply to the issue thread with the message :
+- “/Claim”
 
 **Guidelines for Issue Claims:**
-- Issues are assigned on a first-come, first-serve basis.
-- If no activity is recorded on an issue for 2 days, the issue will be reassigned.
+- Issues are assigned on a first-come, first-serve basis by default unless tags specify otherwise.
+- If no activity is recorded on an issue for 2-3 days, the issue will be reassigned.
 - If you encounter difficulties while working on an issue, feel free to ask for help in our Discord channel.
 
 ---
@@ -42,7 +41,7 @@ If you want to claim any issue (task), simply reply to the issue thread with a m
    Once you’ve completed the work:
    - Push your changes to your forked repository.
    - Create a pull request to the main branch of the upstream repository.
-   - Ensure the PR includes meaningful descriptions and comments explaining your changes.
+   - Ensure the PR follows the required format and includes meaningful descriptions and comments explaining your changes.
 
 5. **Commit Guidelines**  
    - Use a single commit per pull request.
