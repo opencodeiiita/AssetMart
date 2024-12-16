@@ -19,11 +19,6 @@ contract AssetMart is ERC721, Ownable {
         nextTokenId++;
     }
 
-    // Override _baseURI function to provide a custom base URI for metadata
-    function _baseURI() internal view virtual override returns (string memory) {
-        return "https://api.assetmart.com/metadata/"; // Replace with your actual base URI
-    }
-
     // Function to burn an NFT (only the owner of the NFT can burn it)
     function burn(uint256 tokenId) external {
         require(ownerOf(tokenId) == msg.sender, "You must own the token to burn it");
