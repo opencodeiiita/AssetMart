@@ -1,0 +1,32 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+// Import OpenZeppelin's ERC-721 implementation
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+contract AssetMart is ERC721, Ownable {
+    uint256 public nextTokenId;
+    
+    // Constructor to set the token name and symbol
+    constructor() ERC721("AssetMart", "AM") {
+        nextTokenId = 1; // Start minting from token ID 1
+    }
+
+    // Mint new NFT to a specific address 
+    function mint(address to) external onlyOwner {
+        _safeMint(to, nextTokenId);
+        nextTokenId++;
+    }
+
+    // Override _baseURI function to provide a custom base URI for metadata
+    function _baseURI() internal view virtual override returns (string memory) {
+        return "https://api.assetmart.com/metadata/"; // Replace with your actual base URI
+    }
+
+    // Function to burn an NFT (only the owner of the NFT can burn it)
+    function burn(uint256 tokenId) external {
+        require(ownerOf(tokenId) == msg.sender, "You must own the token to burn it");
+        _burn(tokenId);
+    }
+}
