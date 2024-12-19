@@ -30,12 +30,6 @@ contract AssetMart is ERC721URIStorage {
         bool isListed
     );
 
-    event TransferSuccess(
-        uint256 indexed tokenId,
-        address from,
-        address to
-    );
-
     constructor() ERC721("AssetMart", "AM") {
         owner = payable(msg.sender);
     }
@@ -59,8 +53,7 @@ contract AssetMart is ERC721URIStorage {
         // Call function to save to the marketplace
         _createMarketItem(newTokenId, price);
 
-        // Emit events for listing and transfer
-        emit TransferSuccess(newTokenId, msg.sender, address(this));
+        // Emit event for successful listing
         emit ListingSuccess(newTokenId, msg.sender, address(this), price, true);
     }
 
@@ -72,14 +65,5 @@ contract AssetMart is ERC721URIStorage {
             price,
             true
         );
-    }
-
-    function getListingPrice() public view returns (uint256) {
-        return listingPrice;
-    }
-
-    // Function to fetch a market item by tokenId
-    function fetchMarketItem(uint256 tokenId) public view returns (MarketItem memory) {
-        return idToMarketItem[tokenId];
     }
 }
