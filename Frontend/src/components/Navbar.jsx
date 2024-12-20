@@ -6,7 +6,7 @@ function Navbar() {
   return (
     <nav className="navbar">
       <div className="navbar-logo">
-        <Link to="/">NFT Marketplace</Link>
+        <Link to="/">AssetMart</Link>
       </div>
       <ul className="navbar-links">
         <li>

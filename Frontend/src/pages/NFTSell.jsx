@@ -5,7 +5,7 @@ function NFTSell() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    attributes: '',
+    price: '', // Changed from attributes to price
     file: null,
   });
 
@@ -69,16 +69,19 @@ function NFTSell() {
           ></textarea>
         </div>
 
-        {/* Attributes Field */}
+        {/* Price Field */}
         <div className="form-group">
-          <label htmlFor="attributes">Attributes</label>
+          <label htmlFor="price">Price (ETH)</label>
           <input
-            type="text"
-            id="attributes"
-            name="attributes"
-            value={formData.attributes}
+            type="number"
+            id="price"
+            name="price"
+            value={formData.price}
             onChange={handleInputChange}
-            placeholder="Enter attributes (e.g., color: red, size: 10)"
+            placeholder="Enter price in ETH"
+            min="0"
+            step="0.01"
+            required
           />
         </div>
 
