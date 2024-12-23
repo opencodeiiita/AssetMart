@@ -1,85 +1,93 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 contract AssetMart is ERC721URIStorage {
-    struct Item {
-        uint256 id;
-        uint256 price;
-        address payable owner;
+    using Counters for Counters.Counter;
+    Counters.Counter private _tokenIds;
+    address payable owner;
+    uint256 listingPrice = 0.025 ether;
+
+    struct MarketItem {
+        uint256 tokenId;
         address payable seller;
-        bool listed;
+        address payable owner;
+        uint256 price;
+        bool isListed;
         string tokenURI;
     }
-    
-    mapping(uint256 => Item) public items;
-    uint256 public nextTokenId = 1;
-    uint256 public listingFee = 0.01 ether;
-    
-    event TokenCreated(uint256 indexed id, string tokenURI, uint256 price, address seller);
-    event TokenUnlisted(uint256 indexed id);
-    
-    constructor() ERC721("AssetMart", "AM") {}
-    
-    function createToken(string memory _tokenURI, uint256 _price) 
-        external 
-        payable 
-        returns (uint256) 
-    {
-        require(msg.value == listingFee, "Must pay listing fee");
-        require(_price > 0, "Price must be greater than 0");
-        
-        uint256 tokenId = nextTokenId;
-        nextTokenId++;
-        
-        _safeMint(msg.sender, tokenId);
-        _setTokenURI(tokenId, _tokenURI);
-        
-        items[tokenId] = Item({
-            id: tokenId,
-            price: _price,
-            owner: payable(address(this)),
-            seller: payable(msg.sender),
-            listed: true,
-            tokenURI: _tokenURI
-        });
-        
-        _transfer(msg.sender, address(this), tokenId);
-        
-        emit TokenCreated(tokenId, _tokenURI, _price, msg.sender);
-        return tokenId;
+
+    mapping(uint256 => MarketItem) private idToMarketItem;
+
+    event ListingSuccess(
+        uint256 indexed tokenId,
+        address seller,
+        address owner,
+        uint256 price,
+        bool isListed
+    );
+
+    constructor() ERC721("AssetMart", "AM") {
+        owner = payable(msg.sender);
     }
-    
-    function unlistToken(uint256 _tokenId) external {
-        require(items[_tokenId].seller == msg.sender, "Only seller can unlist");
-        require(items[_tokenId].listed, "Token not listed");
+
+    function createToken(string memory tokenURI, uint256 price) public payable {
+        require(price > 0, "Price must be at least 1 wei");
+        require(
+            msg.value == listingPrice,
+            "Price must be equal to listing price"
+        );
+
+        _tokenIds.increment();
+        uint256 newTokenId = _tokenIds.current();
         
-        items[_tokenId].listed = false;
-        _transfer(address(this), items[_tokenId].seller, _tokenId);
+        _mint(msg.sender, newTokenId);
+        _setTokenURI(newTokenId, tokenURI);
         
-        emit TokenUnlisted(_tokenId);
+        transferFrom(msg.sender, address(this), newTokenId);
+        
+        _createMarketItem(newTokenId, price, tokenURI);
+        
+        emit ListingSuccess(newTokenId, msg.sender, address(this), price, true);
     }
-    
-    function getAllNFTs() external view returns (Item[] memory) {
+
+    function _createMarketItem(uint256 tokenId, uint256 price, string memory tokenURI) private {
+        idToMarketItem[tokenId] = MarketItem(
+            tokenId,
+            payable(msg.sender),
+            payable(address(this)),
+            price,
+            true,
+            tokenURI
+        );
+    }
+
+    function getAllNFTs() external view returns (MarketItem[] memory) {
+        uint256 totalItemCount = _tokenIds.current();
         uint256 activeCount = 0;
-        for (uint256 i = 1; i < nextTokenId; i++) {
-            if (items[i].listed) {
+
+        // Count active listings
+        for (uint256 i = 1; i <= totalItemCount; i++) {
+            if (idToMarketItem[i].isListed) {
                 activeCount++;
             }
         }
-        
-        Item[] memory activeItems = new Item[](activeCount);
+
+        // Create array of active listings
+        MarketItem[] memory activeItems = new MarketItem[](activeCount);
         uint256 currentIndex = 0;
-        
-        for (uint256 i = 1; i < nextTokenId; i++) {
-            if (items[i].listed) {
-                Item storage currentItem = items[i];
-                activeItems[currentIndex] = currentItem;
+
+        // Populate active listings array
+        for (uint256 i = 1; i <= totalItemCount; i++) {
+            if (idToMarketItem[i].isListed) {
+                activeItems[currentIndex] = idToMarketItem[i];
                 currentIndex++;
             }
         }
-        
+
         return activeItems;
     }
 }
