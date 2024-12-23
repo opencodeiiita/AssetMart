@@ -6,63 +6,64 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 contract AssetMart is ERC721URIStorage {
+    using Counters for Counters.Counter;
+    Counters.Counter private _tokenIds; // To keep track of token IDs
+
+    address payable owner; // Owner of the contract
+    uint256 listingPrice = 0.025 ether; // Default listing price
+
+    struct MarketItem {
+        uint256 tokenId;
+        address payable seller;
+        address payable owner;
+        uint256 price;
+        bool isListed;
+    }
+
+    mapping(uint256 => MarketItem) private idToMarketItem;
+
+    event ListingSuccess(
+        uint256 indexed tokenId,
+        address seller,
+        address owner,
+        uint256 price,
+        bool isListed
+    );
+
     constructor() ERC721("AssetMart", "AM") {
         owner = payable(msg.sender);
     }
-    using Counters for Counters.Counter;
-    Counters.Counter private _tokenIds;
-    Counters.Counter private _itemsSold;
-    address payable owner;
-    uint256 listPrice = 0.01 ether;
 
-    struct ListedToken {
-        uint256 tokenId;
-        address payable owner;
-        address payable seller;
-        uint256 price;
-        bool currentlyListed;
-    }
-    event TokenListedSuccess (
-        uint256 indexed tokenId,
-        address owner,
-        address seller,
-        uint256 price,
-        bool currentlyListed
-    );
-    mapping(uint256 => ListedToken) private idToListedToken;
-    function createToken(string memory tokenURI, uint256 price) public payable returns (uint) {
+    function createToken(string memory tokenURI, uint256 price) public payable {
+        require(price > 0, "Price must be at least 1 wei");
+        require(
+            msg.value == listingPrice,
+            "Price must be equal to listing price"
+        );
+
         _tokenIds.increment();
         uint256 newTokenId = _tokenIds.current();
 
-        _safeMint(msg.sender, newTokenId);
+        _mint(msg.sender, newTokenId); // Mint the token
+        _setTokenURI(newTokenId, tokenURI); // Set the metadata URI
 
-        _setTokenURI(newTokenId, tokenURI);
+        // Transfer the token to the contract for selling
+        transferFrom(msg.sender, address(this), newTokenId);
 
-        createListedToken(newTokenId, price);
+        // Call function to save to the marketplace
+        _createMarketItem(newTokenId, price);
 
-        return newTokenId;
+        // Emit event for successful listing
+        emit ListingSuccess(newTokenId, msg.sender, address(this), price, true);
     }
 
-    function createListedToken(uint256 tokenId, uint256 price) private {
-        require(msg.value == listPrice, "Hopefully sending the correct price");
-        require(price > 0, "Make sure the price isn't negative");
-
-        idToListedToken[tokenId] = ListedToken(
+    function _createMarketItem(uint256 tokenId, uint256 price) private {
+        idToMarketItem[tokenId] = MarketItem(
             tokenId,
-            payable(address(this)),
             payable(msg.sender),
-            price,
-            true
-        );
-
-        _transfer(msg.sender, address(this), tokenId);
-        emit TokenListedSuccess(
-            tokenId,
-            address(this),
-            msg.sender,
+            payable(address(this)), // Initially owned by the contract
             price,
             true
         );
     }
-
 }
