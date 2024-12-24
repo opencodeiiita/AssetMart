@@ -7,10 +7,9 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 contract AssetMart is ERC721URIStorage {
     using Counters for Counters.Counter;
-    Counters.Counter private _tokenIds; // To keep track of token IDs
-
-    address payable owner; // Owner of the contract
-    uint256 listingPrice = 0.025 ether; // Default listing price
+    Counters.Counter private _tokenIds;
+    address payable owner;
+    uint256 listingPrice = 0.025 ether;
 
     struct MarketItem {
         uint256 tokenId;
@@ -18,6 +17,7 @@ contract AssetMart is ERC721URIStorage {
         address payable owner;
         uint256 price;
         bool isListed;
+        string tokenURI;
     }
 
     mapping(uint256 => MarketItem) private idToMarketItem;
@@ -43,27 +43,51 @@ contract AssetMart is ERC721URIStorage {
 
         _tokenIds.increment();
         uint256 newTokenId = _tokenIds.current();
-
-        _mint(msg.sender, newTokenId); // Mint the token
-        _setTokenURI(newTokenId, tokenURI); // Set the metadata URI
-
-        // Transfer the token to the contract for selling
+        
+        _mint(msg.sender, newTokenId);
+        _setTokenURI(newTokenId, tokenURI);
+        
         transferFrom(msg.sender, address(this), newTokenId);
-
-        // Call function to save to the marketplace
-        _createMarketItem(newTokenId, price);
-
-        // Emit event for successful listing
+        
+        _createMarketItem(newTokenId, price, tokenURI);
+        
         emit ListingSuccess(newTokenId, msg.sender, address(this), price, true);
     }
 
-    function _createMarketItem(uint256 tokenId, uint256 price) private {
+    function _createMarketItem(uint256 tokenId, uint256 price, string memory tokenURI) private {
         idToMarketItem[tokenId] = MarketItem(
             tokenId,
             payable(msg.sender),
-            payable(address(this)), // Initially owned by the contract
+            payable(address(this)),
             price,
-            true
+            true,
+            tokenURI
         );
+    }
+
+    function getAllNFTs() external view returns (MarketItem[] memory) {
+        uint256 totalItemCount = _tokenIds.current();
+        uint256 activeCount = 0;
+
+        // Count active listings
+        for (uint256 i = 1; i <= totalItemCount; i++) {
+            if (idToMarketItem[i].isListed) {
+                activeCount++;
+            }
+        }
+
+        // Create array of active listings
+        MarketItem[] memory activeItems = new MarketItem[](activeCount);
+        uint256 currentIndex = 0;
+
+        // Populate active listings array
+        for (uint256 i = 1; i <= totalItemCount; i++) {
+            if (idToMarketItem[i].isListed) {
+                activeItems[currentIndex] = idToMarketItem[i];
+                currentIndex++;
+            }
+        }
+
+        return activeItems;
     }
 }
