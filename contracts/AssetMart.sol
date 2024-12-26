@@ -43,14 +43,14 @@ contract AssetMart is ERC721URIStorage {
 
         _tokenIds.increment();
         uint256 newTokenId = _tokenIds.current();
-        
+
         _mint(msg.sender, newTokenId);
         _setTokenURI(newTokenId, tokenURI);
-        
+
         transferFrom(msg.sender, address(this), newTokenId);
-        
+
         _createMarketItem(newTokenId, price, tokenURI);
-        
+
         emit ListingSuccess(newTokenId, msg.sender, address(this), price, true);
     }
 
@@ -89,5 +89,37 @@ contract AssetMart is ERC721URIStorage {
         }
 
         return activeItems;
+    }
+
+    function getMyNFTs() external view returns (MarketItem[] memory) {
+        uint256 totalItemCount = _tokenIds.current();
+        uint256 ownedCount = 0;
+
+        // Count NFTs owned by the caller that are listed for sale
+        for (uint256 i = 1; i <= totalItemCount; i++) {
+            if (
+                idToMarketItem[i].isListed &&
+                idToMarketItem[i].owner == msg.sender
+            ) {
+                ownedCount++;
+            }
+        }
+
+        // Create array of owned NFTs
+        MarketItem[] memory myNFTs = new MarketItem[](ownedCount);
+        uint256 currentIndex = 0;
+
+        // Populate owned NFTs array
+        for (uint256 i = 1; i <= totalItemCount; i++) {
+            if (
+                idToMarketItem[i].isListed &&
+                idToMarketItem[i].owner == msg.sender
+            ) {
+                myNFTs[currentIndex] = idToMarketItem[i];
+                currentIndex++;
+            }
+        }
+
+        return myNFTs;
     }
 }
