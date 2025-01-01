@@ -30,6 +30,13 @@ contract AssetMart is ERC721URIStorage {
         bool isListed
     );
 
+    event SaleExecuted(
+        uint256 indexed tokenId,
+        address buyer,
+        address seller,
+        uint256 price
+    );
+
     constructor() ERC721("AssetMart", "AM") {
         owner = payable(msg.sender);
     }
@@ -65,22 +72,42 @@ contract AssetMart is ERC721URIStorage {
         );
     }
 
+    function executeSale(uint256 tokenId) external payable {
+        MarketItem storage item = idToMarketItem[tokenId];
+
+        require(item.isListed, "NFT is not listed for sale");
+        require(msg.value == item.price, "Incorrect ETH amount sent");
+        require(item.seller != msg.sender, "Buyer cannot be the seller");
+
+        address payable seller = item.seller;
+
+        // Transfer the NFT to the buyer
+        _transfer(address(this), msg.sender, tokenId);
+
+        // Update the market item state
+        item.owner = payable(msg.sender);
+        item.isListed = false;
+
+        // Transfer ETH to the seller
+        (bool success, ) = seller.call{value: msg.value}("");
+        require(success, "Transfer to seller failed");
+
+        emit SaleExecuted(tokenId, msg.sender, seller, item.price);
+    }
+
     function getAllNFTs() external view returns (MarketItem[] memory) {
         uint256 totalItemCount = _tokenIds.current();
         uint256 activeCount = 0;
 
-        // Count active listings
         for (uint256 i = 1; i <= totalItemCount; i++) {
             if (idToMarketItem[i].isListed) {
                 activeCount++;
             }
         }
 
-        // Create array of active listings
         MarketItem[] memory activeItems = new MarketItem[](activeCount);
         uint256 currentIndex = 0;
 
-        // Populate active listings array
         for (uint256 i = 1; i <= totalItemCount; i++) {
             if (idToMarketItem[i].isListed) {
                 activeItems[currentIndex] = idToMarketItem[i];
@@ -95,7 +122,6 @@ contract AssetMart is ERC721URIStorage {
         uint256 totalItemCount = _tokenIds.current();
         uint256 ownedCount = 0;
 
-        // Count NFTs owned by the caller that are listed for sale
         for (uint256 i = 1; i <= totalItemCount; i++) {
             if (
                 idToMarketItem[i].isListed &&
@@ -105,11 +131,9 @@ contract AssetMart is ERC721URIStorage {
             }
         }
 
-        // Create array of owned NFTs
         MarketItem[] memory myNFTs = new MarketItem[](ownedCount);
         uint256 currentIndex = 0;
 
-        // Populate owned NFTs array
         for (uint256 i = 1; i <= totalItemCount; i++) {
             if (
                 idToMarketItem[i].isListed &&
@@ -121,5 +145,29 @@ contract AssetMart is ERC721URIStorage {
         }
 
         return myNFTs;
+    }
+
+    // Helper functions
+    function updateListPrice(uint256 _listPrice) public {
+        require(msg.sender == owner, "Only contract owner can update the listing price");
+        listingPrice = _listPrice;
+    }
+
+    function getListPrice() public view returns (uint256) {
+        return listingPrice;
+    }
+
+    function getLatestIdToListedToken() public view returns (MarketItem memory) {
+        require(_tokenIds.current() > 0, "No tokens have been created yet");
+        return idToMarketItem[_tokenIds.current()];
+    }
+
+    function getListedTokenForId(uint256 tokenId) public view returns (MarketItem memory) {
+        require(idToMarketItem[tokenId].isListed, "Token is not listed");
+        return idToMarketItem[tokenId];
+    }
+
+    function getCurrentToken() public view returns (uint256) {
+        return _tokenIds.current();
     }
 }
