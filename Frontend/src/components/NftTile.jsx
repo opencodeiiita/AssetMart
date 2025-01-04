@@ -1,16 +1,15 @@
-import React from 'react';
-import './NftTile.css';
+import React from "react";
 
-const NftTile = ({ image, name, description }) => {
+function NftTile({ image, title, price, seller, onBuy }) {
   return (
     <div className="nft-tile">
-      <img src={image} alt={name} className="nft-image" />
-      <div className="nft-details">
-        <h3 className="nft-name">{name}</h3>
-        <p className="nft-description">{description}</p>
-      </div>
+      <img src={image} alt={title} className="nft-image" />
+      <h3>{title}</h3>
+      <p>Price: {price}</p>
+      <p>Seller: {seller}</p>
+      <button onClick={onBuy}>Buy this NFT</button>
     </div>
   );
-};
+}
 
 export default NftTile;
