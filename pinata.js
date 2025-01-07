@@ -60,11 +60,4 @@ async function uploadJSONToIPFS(jsonObject) {
     }
 }
 
-function GetIpfsUrlFromPinata(pinataUrl){
-    var IPFSUrl = pinataUrl.split("/");
-    const lastIndex = IPFSUrl.length;
-    IPFSUrl = "https://ipfs.io/ipfs/"+IPFSUrl[lastIndex-1];
-    return IPFSUrl;
-};
-
-module.exports = { uploadFileToIPFS, uploadJSONToIPFS, GetIpfsUrlFromPinata };
+module.exports = { uploadFileToIPFS, uploadJSONToIPFS };
