@@ -11,6 +11,6 @@ const NFTTile = ({ nft, onBuy }) => {
       <button onClick={() => onBuy(nft)}>Buy this NFT</button>
     </div>
   );
-};
+}
 
 export default NFTTile;
