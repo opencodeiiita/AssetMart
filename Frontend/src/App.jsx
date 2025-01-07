@@ -38,6 +38,7 @@ function App() {
           <Route path="/nft-sell" element={<NFTSell />} />
           <Route path="/nft-listing" element={<NFTListing />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/nft/:nftName" element={<NFTPage />} />
         </Routes>
       </Router>
     );

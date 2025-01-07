@@ -61,6 +61,20 @@ const Marketplace = ({ walletAddress, connectWallet }) => {
     fetchNFTs();
   }, []);
 
+  const navigate = useNavigate();
+
+  if (isLoading) {
+    return <p>Loading NFTs...</p>;
+  }
+
+  if (nfts.length === 0) {
+    return <p>No NFTs available for sale.</p>;
+  }
+
+  const handleNFTClick = (nft) => {
+    navigate(`/nft/${encodeURIComponent(nft.name)}`);
+  };
+
   return (
     <div>
       <div className="marketplace">
@@ -75,7 +89,13 @@ const Marketplace = ({ walletAddress, connectWallet }) => {
         ) : nfts.length > 0 ? (
           <div className="nft-grid">
             {nfts.map((nft) => (
-              <NFTTile key={nft.tokenId} nft={nft} onBuy={handleBuyNFT} />
+              <div
+                key={nft.tokenId}
+                onClick={() => handleNFTClick(nft)}
+                style={{ cursor: "pointer" }}
+              >
+                <NFTTile nft={nft} />
+              </div>
             ))}
           </div>
         ) : (
