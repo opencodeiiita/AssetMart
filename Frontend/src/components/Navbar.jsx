@@ -1,8 +1,8 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import './Navbar.css';
+import React from "react";
+import { Link } from "react-router-dom";
+import "./Navbar.css";
 
-function Navbar() {
+function Navbar({ walletAddress, connectWallet }) {
   return (
     <nav className="navbar">
       <div className="navbar-logo">
@@ -22,7 +22,9 @@ function Navbar() {
           <Link to="/profile">Profile</Link>
         </li>
       </ul>
-      <button className="connect-wallet">Connect Wallet</button>
+      <button onClick={connectWallet} className="connect-wallet">
+        {walletAddress ? `Connected: ${walletAddress.slice(0, 6)}...` : "Connect Wallet"}
+      </button>
     </nav>
   );
 }
