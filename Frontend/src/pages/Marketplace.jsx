@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import NFTTile from "../components/NFTTile";
 import contractABI from "../AssetMartABI.json";
+import { GetIpfsUrlFromPinata } from "../../../pinata";
 
 const contractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
 
@@ -18,48 +19,40 @@ const Marketplace = ({ walletAddress, connectWallet }) => {
         alert("MetaMask is required to fetch NFTs.");
         return;
       }
+  
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const contract = new ethers.Contract(contractAddress, contractABI, provider);
-
-      const fetchedNFTs = await contract.getAllNFTs();
-      const formattedNFTs = fetchedNFTs.map((nft) => ({
-        tokenId: nft.tokenId.toString(),
-        name: nft.name,
-        image: nft.image, // Assuming IPFS link or URL is stored
-        price: ethers.utils.formatEther(nft.price), // Convert price from Wei to ETH
-        seller: nft.seller,
-      }));
-      setNfts(formattedNFTs);
+  
+      // Fetch all NFT transactions
+      const transactions = await contract.getAllNFTs();
+  
+      const items = await Promise.all(
+        transactions.map(async (transaction) => {
+          let tokenURI = await contract.tokenURI(transaction.tokenId);
+          tokenURI = GetIpfsUrlFromPinata(tokenURI); // Convert IPFS URL if needed
+          const meta = await axios.get(tokenURI); // Fetch metadata from the token URI
+          const metadata = meta.data;
+  
+          const price = ethers.utils.formatUnits(transaction.price.toString(), "ether");
+          const item = {
+            price,
+            tokenId: transaction.tokenId.toNumber(),
+            seller: transaction.seller,
+            owner: transaction.owner,
+            image: metadata.image, // Extracted image URL
+            name: metadata.name, // Extracted name
+            description: metadata.description, // Extracted description
+          };
+  
+          return item;
+        })
+      );
+  
+      setNfts(items); // Update state with the formatted NFTs
     } catch (error) {
       console.error("Error fetching NFTs:", error);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  // Function to buy an NFT
-  const handleBuyNFT = async (nft) => {
-    try {
-      if (!window.ethereum) {
-        alert("MetaMask is required to buy NFTs.");
-        return;
-      }
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      const signer = provider.getSigner();
-      const contract = new ethers.Contract(contractAddress, contractABI, signer);
-
-      const transaction = await contract.executeSale(nft.tokenId, {
-        value: ethers.utils.parseEther(nft.price), // Convert price back to Wei
-      });
-      console.log("Transaction pending:", transaction.hash);
-
-      await transaction.wait();
-      alert("Transaction successful!");
-      // Refresh the NFT list after purchase
-      fetchNFTs();
-    } catch (error) {
-      console.error("Error buying NFT:", error);
-      alert("Transaction failed!");
     }
   };
 
